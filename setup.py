@@ -20,5 +20,5 @@ setup(
   classifiers=classifiers,
   keywords='Bezier', 
   packages=find_packages(),
-  install_requires=[''] 
+  install_requires=['numpy'] 
 )
