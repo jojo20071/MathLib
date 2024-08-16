@@ -1,5 +1,8 @@
 import numpy as np
 import cmath
+import scipy.integrate as integrate
+import scipy.signal as signal
+import pywt
 
 def add(a,b):
     return a+b
@@ -162,3 +165,41 @@ def complex_roots(coefficients, tol=1e-10, max_iter=1000):
         A = np.polydiv(A, np.array([1, -x0]))[0]
     
     return np.array(roots)
+
+def contour_integral(f, C, num_points=1000):
+    t = np.linspace(0, 1, num_points)
+    z = np.array([C(s) for s in t])
+    dz_dt = np.gradient(z, t)
+
+    integrand = np.array([f(z[i]) * dz_dt[i] for i in range(num_points)])
+    result = integrate.simps(integrand, t)
+    
+    return result
+
+def complex_derivative(f, z, h=1e-10):
+    return (f(z + h) - f(z - h)) / (2 * h)
+
+def matrix_convolution(A, B):
+    return signal.convolve2d(A, B, mode='full')
+
+def dwt(data, wavelet='haar', level=1):
+    coeffs = pywt.wavedec(data, wavelet, level=level)
+    return coeffs
+
+def idwt(coeffs, wavelet='haar'):
+    reconstructed_data = pywt.waverec(coeffs, wavelet)
+    return reconstructed_data
+
+def pca(data, num_components):
+    data_mean = np.mean(data, axis=0)
+    centered_data = data - data_mean
+    covariance_matrix = np.cov(centered_data.T)
+    
+    eigenvalues, eigenvectors = np.linalg.eig(covariance_matrix)
+    idx = np.argsort(eigenvalues)[::-1]
+    eigenvectors = eigenvectors[:, idx]
+    
+    principal_components = eigenvectors[:, :num_components]
+    reduced_data = np.dot(centered_data, principal_components)
+    
+    return reduced_data, principal_components
