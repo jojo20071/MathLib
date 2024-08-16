@@ -284,3 +284,33 @@ def complex_modulus_argument(z):
     modulus = abs(z)
     argument = np.angle(z)
     return modulus, argument
+
+def linear_least_squares(A, b):
+    A_conj_trans = np.conjugate(A.T)
+    x = np.linalg.solve(np.dot(A_conj_trans, A), np.dot(A_conj_trans, b))
+    return x
+
+def schur_decomposition(A):
+    T, Z = np.linalg.schur(A)
+    return T, Z
+
+def complex_gradient_descent(f, grad_f, z0, learning_rate=0.01, num_iterations=1000):
+    z = z0
+    for _ in range(num_iterations):
+        grad = grad_f(z)
+        z = z - learning_rate * grad
+    return z
+
+def runge_kutta(f, y0, t0, t1, h):
+    t = np.arange(t0, t1 + h, h)
+    y = np.zeros((len(t), len(y0)))
+    y[0] = y0
+    
+    for i in range(1, len(t)):
+        k1 = h * f(t[i-1], y[i-1])
+        k2 = h * f(t[i-1] + h/2, y[i-1] + k1/2)
+        k3 = h * f(t[i-1] + h/2, y[i-1] + k2/2)
+        k4 = h * f(t[i], y[i-1] + k3)
+        y[i] = y[i-1] + (k1 + 2*k2 + 2*k3 + k4) / 6
+    
+    return t, y
