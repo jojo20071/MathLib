@@ -238,3 +238,49 @@ def gaussian_quadrature(f, a, b, n):
 
 def complex_conjugate_transpose(A):
     return np.conjugate(A.T)
+
+
+def nmf(V, num_components, num_iterations=1000, tol=1e-4):
+    n, m = V.shape
+    W = np.abs(np.random.randn(n, num_components))
+    H = np.abs(np.random.randn(num_components, m))
+
+    for _ in range(num_iterations):
+        H = H * (np.dot(W.T, V) / (np.dot(W.T, np.dot(W, H)) + tol))
+        W = W * (np.dot(V, H.T) / (np.dot(W, np.dot(H, H.T)) + tol))
+    
+    return W, H
+
+def kalman_filter(F, H, Q, R, x0, P0, measurements):
+    x = x0
+    P = P0
+    x_estimates = []
+
+    for z in measurements:
+        x = np.dot(F, x)
+        P = np.dot(np.dot(F, P), F.T) + Q
+        
+        y = z - np.dot(H, x)
+        S = np.dot(H, np.dot(P, H.T)) + R
+        K = np.dot(np.dot(P, H.T), np.linalg.inv(S))
+        
+        x = x + np.dot(K, y)
+        P = np.dot(np.eye(len(x)) - np.dot(K, H), P)
+        
+        x_estimates.append(x)
+    
+    return np.array(x_estimates)
+
+def svd_image_compression(image, num_components):
+    U, S, V = np.linalg.svd(image, full_matrices=False)
+    
+    S_reduced = np.zeros((num_components, num_components))
+    np.fill_diagonal(S_reduced, S[:num_components])
+    
+    compressed_image = np.dot(U[:, :num_components], np.dot(S_reduced, V[:num_components, :]))
+    return compressed_image
+
+def complex_modulus_argument(z):
+    modulus = abs(z)
+    argument = np.angle(z)
+    return modulus, argument
