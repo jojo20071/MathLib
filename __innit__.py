@@ -68,4 +68,45 @@ def qr_decomposition(A):
     
     return Q, R
 
+def cholesky_decomposition(A):
+    n = A.shape[0]
+    L = np.zeros((n, n))
 
+    for i in range(n):
+        for j in range(i + 1):
+            sum_k = sum(L[i, k] * L[j, k] for k in range(j))
+            if i == j:
+                L[i, j] = np.sqrt(A[i, i] - sum_k)
+            else:
+                L[i, j] = (A[i, j] - sum_k) / L[j, j]
+    
+    return L
+
+def power_iteration(A, num_simulations=1000):
+    n, _ = A.shape
+    b_k = np.random.rand(n)
+
+    for _ in range(num_simulations):
+        b_k1 = np.dot(A, b_k)
+        b_k1_norm = np.linalg.norm(b_k1)
+        b_k = b_k1 / b_k1_norm
+    
+    eigenvalue = np.dot(b_k.T, np.dot(A, b_k))
+    eigenvector = b_k
+    return eigenvalue, eigenvector
+
+def eigen_decomposition(A, tol=1e-10):
+    n = A.shape[0]
+    eigenvalues = []
+    eigenvectors = []
+
+    for _ in range(n):
+        eigenvalue, eigenvector = power_iteration(A)
+        eigenvalues.append(eigenvalue)
+        eigenvectors.append(eigenvector)
+
+        A = A - eigenvalue * np.outer(eigenvector, eigenvector)
+        if np.linalg.norm(A) < tol:
+            break
+    
+    return np.array(eigenvalues), np.array(eigenvectors).T
