@@ -314,3 +314,41 @@ def runge_kutta(f, y0, t0, t1, h):
         y[i] = y[i-1] + (k1 + 2*k2 + 2*k3 + k4) / 6
     
     return t, y
+
+def multivariate_complex_gaussian(mean, cov, size=1):
+    real_part = np.random.multivariate_normal(np.real(mean), np.real(cov), size)
+    imag_part = np.random.multivariate_normal(np.imag(mean), np.imag(cov), size)
+    return real_part + 1j * imag_part
+
+def newton_raphson_complex(f, df, z0, tol=1e-10, max_iter=1000):
+    z = z0
+    for _ in range(max_iter):
+        dz = f(z) / df(z)
+        z = z - dz
+        if abs(dz) < tol:
+            break
+    return z
+
+def eigenvalue_perturbation_analysis(A, dA):
+    eigenvalues, eigenvectors = np.linalg.eig(A)
+    perturbed_eigenvalues = []
+
+    for i in range(len(eigenvalues)):
+        vi = eigenvectors[:, i]
+        perturbed_lambda = eigenvalues[i] + np.dot(np.dot(vi.T.conjugate(), dA), vi) / np.dot(vi.T.conjugate(), vi)
+        perturbed_eigenvalues.append(perturbed_lambda)
+    
+    return np.array(perturbed_eigenvalues)
+
+def solve_complex_riccati(A, B, C, D):
+    X = np.zeros_like(A, dtype=complex)
+    max_iter = 100
+    tol = 1e-10
+
+    for _ in range(max_iter):
+        X_new = A + B @ X @ C + D @ X @ X
+        if np.linalg.norm(X_new - X) < tol:
+            break
+        X = X_new
+    
+    return X
