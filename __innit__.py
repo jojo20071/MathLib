@@ -1,4 +1,5 @@
 import numpy as np
+import cmath
 
 def add(a,b):
     return a+b
@@ -110,3 +111,54 @@ def eigen_decomposition(A, tol=1e-10):
             break
     
     return np.array(eigenvalues), np.array(eigenvectors).T
+
+def fft(x):
+    N = len(x)
+    if N <= 1:
+        return x
+    even = fft(x[0::2])
+    odd = fft(x[1::2])
+    T = [np.exp(-2j * np.pi * k / N) * odd[k] for k in range(N // 2)]
+    return [even[k] + T[k] for k in range(N // 2)] + \
+           [even[k] - T[k] for k in range(N // 2)]
+
+def ifft(X):
+    N = len(X)
+    if N <= 1:
+        return X
+    even = ifft(X[0::2])
+    odd = ifft(X[1::2])
+    T = [np.exp(2j * np.pi * k / N) * odd[k] for k in range(N // 2)]
+    result = [even[k] + T[k] for k in range(N // 2)] + \
+             [even[k] - T[k] for k in range(N // 2)]
+    return [x / 2 for x in result]
+
+def to_polar(z):
+    r = abs(z)
+    theta = cmath.phase(z)
+    return r, theta
+
+def to_rectangular(r, theta):
+    return r * np.exp(1j * theta)
+
+def complex_roots(coefficients, tol=1e-10, max_iter=1000):
+    n = len(coefficients) - 1
+    roots = []
+    A = np.array(coefficients, dtype=complex)
+    
+    for _ in range(n):
+        x0 = np.random.rand() + 1j * np.random.rand()
+        for _ in range(max_iter):
+            P = np.polyval(A, x0)
+            P_prime = np.polyval(np.polyder(A), x0)
+            if abs(P_prime) < tol:
+                break
+            x1 = x0 - P / P_prime
+            if abs(x1 - x0) < tol:
+                break
+            x0 = x1
+        
+        roots.append(x0)
+        A = np.polydiv(A, np.array([1, -x0]))[0]
+    
+    return np.array(roots)
