@@ -3,6 +3,8 @@ import cmath
 import scipy.integrate as integrate
 import scipy.signal as signal
 import pywt
+from scipy.signal import hilbert
+import numpy.polynomial.legendre as leg
 
 def add(a,b):
     return a+b
@@ -203,3 +205,36 @@ def pca(data, num_components):
     reduced_data = np.dot(centered_data, principal_components)
     
     return reduced_data, principal_components
+
+def complex_power_iteration(A, num_simulations=1000, tol=1e-10):
+    n, _ = A.shape
+    b_k = np.random.rand(n) + 1j * np.random.rand(n)
+
+    for _ in range(num_simulations):
+        b_k1 = np.dot(A, b_k)
+        b_k1_norm = np.linalg.norm(b_k1)
+        b_k = b_k1 / b_k1_norm
+        if np.linalg.norm(b_k1 - b_k * b_k1_norm) < tol:
+            break
+    
+    eigenvalue = np.dot(b_k.T.conjugate(), np.dot(A, b_k)) / np.dot(b_k.T.conjugate(), b_k)
+    eigenvector = b_k
+    return eigenvalue, eigenvector
+
+
+def hilbert_transform(signal):
+    analytic_signal = hilbert(signal)
+    amplitude_envelope = np.abs(analytic_signal)
+    instantaneous_phase = np.angle(analytic_signal)
+    instantaneous_frequency = np.diff(np.unwrap(instantaneous_phase))
+    
+    return amplitude_envelope, instantaneous_phase, instantaneous_frequency
+
+def gaussian_quadrature(f, a, b, n):
+    x, w = leg.leggauss(n)
+    t = 0.5 * (x + 1) * (b - a) + a
+    integral = sum(w * f(t)) * 0.5 * (b - a)
+    return integral
+
+def complex_conjugate_transpose(A):
+    return np.conjugate(A.T)

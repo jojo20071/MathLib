@@ -20,5 +20,5 @@ setup(
   classifiers=classifiers,
   keywords='Bezier', 
   packages=find_packages(),
-  install_requires=["numpy","cmath","scipy.integrate","scipy.signal","pywt"] 
+  install_requires=["numpy","cmath","scipy.integrate","scipy.signal","pywt","scipy.signal"] 
 )
