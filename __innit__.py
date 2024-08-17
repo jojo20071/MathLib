@@ -659,3 +659,26 @@ def complex_de_casteljau(points, t):
         for i in range(n - r + 1):
             new_points[i] = (1 - t) * new_points[i] + t * new_points[i + 1]
     return new_points[0], new_points[:n]
+
+def complex_rational_bezier(points, weights, t):
+    n = len(points) - 1
+    numerator = np.sum([weights[i] * points[i] * (1 - t)**(n - i) * t**i for i in range(n + 1)])
+    denominator = np.sum([weights[i] * (1 - t)**(n - i) * t**i for i in range(n + 1)])
+    return numerator / denominator
+
+
+def complex_rational_bezier(points, weights, t):
+    n = len(points) - 1
+    numerator = np.sum([weights[i] * points[i] * (1 - t)**(n - i) * t**i for i in range(n + 1)])
+    denominator = np.sum([weights[i] * (1 - t)**(n - i) * t**i for i in range(n + 1)])
+    return numerator / denominator
+
+def complex_bezier_length(points, num_samples=100):
+    length = 0
+    t_values = np.linspace(0, 1, num_samples)
+    for i in range(1, num_samples):
+        p1 = complex_cubic_bezier(*points, t_values[i - 1])
+        p2 = complex_cubic_bezier(*points, t_values[i])
+        length += np.abs(p2 - p1)
+    return length
+
