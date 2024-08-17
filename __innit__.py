@@ -727,3 +727,44 @@ def complex_bezier_intersection(points1, points2, num_samples=100):
     return intersections
 
 
+def complex_bezier_offset(points, distance):
+    n = len(points) - 1
+    derivative_points = [n * (points[i + 1] - points[i]) for i in range(n)]
+    
+    offset_points = []
+    for i in range(len(derivative_points)):
+        normal = 1j * (derivative_points[i] / np.abs(derivative_points[i]))
+        offset_points.append(points[i] + distance * normal)
+    
+    offset_curve = lambda t: complex_cubic_bezier(*offset_points, t)
+    return offset_curve
+
+def complex_bezier_parameterization(points, num_points=100):
+    t_values = np.linspace(0, 1, num_points)
+    bezier_points = np.array([complex_cubic_bezier(*points, t) for t in t_values])
+    
+    return t_values, bezier_points
+
+def complex_bezier_tangent(points, t):
+    n = len(points) - 1
+    derivative_points = np.array([n * (points[i + 1] - points[i]) for i in range(n)])
+    tangent_vector = complex_cubic_bezier(*derivative_points, t)
+    return tangent_vector / np.abs(tangent_vector) 
+
+def complex_bezier_blending_functions(t):
+    b0 = (1 - t) ** 2
+    b1 = 2 * (1 - t) * t
+    b2 = t ** 2
+    return b0, b1, b2
+
+def complex_bezier_surface_normal(control_points, u, v):
+    du = lambda u: np.gradient(complex_bezier_surface_patch(control_points, u, v))
+    dv = lambda v: np.gradient(complex_bezier_surface_patch(control_points, u, v))
+    
+    tangent_u = du(u)
+    tangent_v = dv(v)
+    
+    normal = np.cross(tangent_u, tangent_v)
+    normal /= np.linalg.norm(normal)
+    
+    return normal
