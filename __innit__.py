@@ -768,3 +768,22 @@ def complex_bezier_surface_normal(control_points, u, v):
     normal /= np.linalg.norm(normal)
     
     return normal
+
+def complex_bezier_arc_length(points, num_samples=100):
+    t_values = np.linspace(0, 1, num_samples)
+    curve_points = np.array([complex_cubic_bezier(*points, t) for t in t_values])
+    lengths = np.sqrt(np.sum(np.diff(curve_points, axis=0)**2, axis=1))
+    return np.sum(lengths)
+
+def complex_bezier_distance(points1, points2, num_samples=100):
+    t_values = np.linspace(0, 1, num_samples)
+    curve1_points = np.array([complex_cubic_bezier(*points1, t) for t in t_values])
+    curve2_points = np.array([complex_cubic_bezier(*points2, t) for t in t_values])
+    distances = np.abs(curve1_points - curve2_points)
+    return np.mean(distances)
+
+def complex_bezier_refitting(points, new_points, t):
+    p = complex_cubic_bezier(*points, t)
+    new_points = np.array(new_points)
+    refitted_curve = np.array([complex_cubic_bezier(*new_points, t) for t in np.linspace(0, 1, len(points))])
+    return refitted_curve
