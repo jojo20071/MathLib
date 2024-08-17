@@ -628,3 +628,34 @@ def complex_qr_decomposition(A):
         Q[:, j] = v / R[j, j]
     
     return Q, R
+
+
+def complex_wavelet_packet_decomposition(signal, wavelet='cmor', max_level=None):
+    wp = pywt.WaveletPacket(data=signal, wavelet=wavelet, mode='symmetric', maxlevel=max_level)
+    nodes = wp.get_level(max_level, 'freq')
+    coeffs = np.array([n.data for n in nodes])
+    
+    return coeffs, wp
+
+
+def complex_newtons_method_polynomial(p, dp, z0, tol=1e-10, max_iter=1000):
+    z = z0
+    for _ in range(max_iter):
+        z_next = z - p(z) / dp(z)
+        if abs(z_next - z) < tol:
+            break
+        z = z_next
+    return z
+
+def complex_ginibre_ensemble(n):
+    real_part = np.random.randn(n, n)
+    imag_part = np.random.randn(n, n)
+    return real_part + 1j * imag_part
+
+def complex_de_casteljau(points, t):
+    n = len(points) - 1
+    new_points = np.copy(points)
+    for r in range(1, n + 1):
+        for i in range(n - r + 1):
+            new_points[i] = (1 - t) * new_points[i] + t * new_points[i + 1]
+    return new_points[0], new_points[:n]
