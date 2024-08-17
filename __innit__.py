@@ -5,6 +5,7 @@ import scipy.signal as signal
 import pywt
 from scipy.signal import hilbert
 import numpy.polynomial.legendre as leg
+from sklearn.svm import SVC
 
 def add(a,b):
     return a+b
@@ -352,3 +353,53 @@ def solve_complex_riccati(A, B, C, D):
         X = X_new
     
     return X
+
+def complex_singular_value_thresholding(M, tau, max_iter=100):
+    X = np.zeros_like(M, dtype=complex)
+    for _ in range(max_iter):
+        U, S, V = np.linalg.svd(X, full_matrices=False)
+        S = np.maximum(S - tau, 0)
+        X_new = np.dot(U, np.dot(np.diag(S), V))
+        if np.linalg.norm(X_new - X) < 1e-10:
+            break
+        X = X_new
+    return X
+
+def complex_k_means(X, k, max_iter=100, tol=1e-4):
+    n_samples, n_features = X.shape
+    centroids = X[np.random.choice(n_samples, k, replace=False)]
+    
+    for _ in range(max_iter):
+        distances = np.array([[np.linalg.norm(x - c) for c in centroids] for x in X])
+        labels = np.argmin(distances, axis=1)
+        
+        new_centroids = np.array([X[labels == i].mean(axis=0) for i in range(k)])
+        if np.linalg.norm(new_centroids - centroids) < tol:
+            break
+        centroids = new_centroids
+    
+    return centroids, labels
+
+def complex_dct(x):
+    N = len(x)
+    X = np.zeros(N, dtype=complex)
+    for k in range(N):
+        X[k] = sum(x[n] * np.cos(np.pi * k * (2*n + 1) / (2 * N)) + 1j * x[n] * np.sin(np.pi * k * (2*n + 1) / (2 * N)) for n in range(N))
+    return X
+
+def hermitian_matrix_completion(M, mask, max_iter=100):
+    X = np.zeros_like(M, dtype=complex)
+    for _ in range(max_iter):
+        X = (M * mask) + (X * (1 - mask))
+        X = (X + X.T.conjugate()) / 2
+        if np.linalg.norm((X * mask) - M) < 1e-10:
+            break
+    return X
+
+
+
+def complex_svm(X, y, C=1.0, kernel='linear'):
+    real_part = np.hstack([np.real(X), np.imag(X)])
+    clf = SVC(C=C, kernel=kernel)
+    clf.fit(real_part, y)
+    return clf
