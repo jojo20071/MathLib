@@ -8,6 +8,7 @@ from sklearn.svm import SVC
 from scipy.fft import fft, ifft
 from scipy.stats import norm
 from sklearn.decomposition import SparseCoder
+import emd
 
 def add(a,b):
     return a+b
@@ -557,3 +558,34 @@ def complex_bayesian_inference(prior_mean, prior_var, likelihood_var, data):
     
     return posterior_mean, posterior_var
 
+def complex_ica(X, n_components):
+    real_part = np.real(X)
+    imag_part = np.imag(X)
+    
+    ica_real = FastICA(n_components=n_components)
+    ica_imag = FastICA(n_components=n_components)
+    
+    sources_real = ica_real.fit_transform(real_part)
+    sources_imag = ica_imag.fit_transform(imag_part)
+    
+    sources = sources_real + 1j * sources_imag
+    return sources, ica_real, ica_imag
+
+def complex_autocorrelation(signal):
+    N = len(signal)
+    autocorr = np.zeros(N, dtype=complex)
+    
+    for lag in range(N):
+        autocorr[lag] = np.dot(np.conjugate(signal[:N-lag]), signal[lag:])
+    
+    return autocorr
+
+def complex_emd(signal):
+    real_part = np.real(signal)
+    imag_part = np.imag(signal)
+    
+    imfs_real = emd.sift.sift(real_part)
+    imfs_imag = emd.sift.sift(imag_part)
+    
+    imfs = imfs_real + 1j * imfs_imag
+    return imfs
