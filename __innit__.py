@@ -667,6 +667,15 @@ def complex_rational_bezier(points, weights, t):
     return numerator / denominator
 
 
+def complex_cubic_bezier(p0, p1, p2, p3, t):
+    return (1 - t)**3 * p0 + 3 * (1 - t)**2 * t * p1 + 3 * (1 - t) * t**2 * p2 + t**3 * p3
+
+def complex_quadratic_bezier(p0, p1, p2, t):
+    return (1 - t)**2 * p0 + 2 * (1 - t) * t * p1 + t**2 * p2
+
+
+
+
 def complex_rational_bezier(points, weights, t):
     n = len(points) - 1
     numerator = np.sum([weights[i] * points[i] * (1 - t)**(n - i) * t**i for i in range(n + 1)])
@@ -681,4 +690,40 @@ def complex_bezier_length(points, num_samples=100):
         p2 = complex_cubic_bezier(*points, t_values[i])
         length += np.abs(p2 - p1)
     return length
+
+def complex_bezier_bounding_box(points, num_samples=100):
+    t_values = np.linspace(0, 1, num_samples)
+    curve_points = np.array([complex_cubic_bezier(*points, t) for t in t_values])
+    min_x, min_y = np.min(np.real(curve_points)), np.min(np.imag(curve_points))
+    max_x, max_y = np.max(np.real(curve_points)), np.max(np.imag(curve_points))
+    return (min_x, min_y), (max_x, max_y)
+
+def complex_bezier_surface_patch(control_points, u, v):
+    n = len(control_points) - 1
+    m = len(control_points[0]) - 1
+    
+    surface_point = 0 + 0j
+    for i in range(n + 1):
+        for j in range(m + 1):
+            bernstein_u = (np.math.comb(n, i) * (1 - u)**(n - i) * u**i)
+            bernstein_v = (np.math.comb(m, j) * (1 - v)**(m - j) * v**j)
+            surface_point += control_points[i][j] * bernstein_u * bernstein_v
+    
+    return surface_point
+
+def complex_bezier_intersection(points1, points2, num_samples=100):
+    intersections = []
+    t_values1 = np.linspace(0, 1, num_samples)
+    t_values2 = np.linspace(0, 1, num_samples)
+    
+    curve_points1 = np.array([complex_cubic_bezier(*points1, t) for t in t_values1])
+    curve_points2 = np.array([complex_cubic_bezier(*points2, t) for t in t_values2])
+    
+    for i in range(num_samples):
+        for j in range(num_samples):
+            if np.isclose(curve_points1[i], curve_points2[j], atol=1e-6):
+                intersections.append((t_values1[i], t_values2[j], curve_points1[i]))
+    
+    return intersections
+
 
