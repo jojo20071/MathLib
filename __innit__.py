@@ -589,3 +589,42 @@ def complex_emd(signal):
     
     imfs = imfs_real + 1j * imfs_imag
     return imfs
+
+def complex_conjugate_gradient(A, b, x0=None, tol=1e-10, max_iter=None):
+    if x0 is None:
+        x0 = np.zeros_like(b, dtype=complex)
+    if max_iter is None:
+        max_iter = len(b)
+    
+    r = b - np.dot(A, x0)
+    p = r
+    x = x0
+    
+    for _ in range(max_iter):
+        Ap = np.dot(A, p)
+        alpha = np.dot(np.conjugate(r), r) / np.dot(np.conjugate(p), Ap)
+        x = x + alpha * p
+        r_new = r - alpha * Ap
+        if np.linalg.norm(r_new) < tol:
+            break
+        beta = np.dot(np.conjugate(r_new), r_new) / np.dot(np.conjugate(r), r)
+        p = r_new + beta * p
+        r = r_new
+    
+    return x
+
+
+def complex_qr_decomposition(A):
+    m, n = A.shape
+    Q = np.zeros((m, m), dtype=complex)
+    R = np.zeros((m, n), dtype=complex)
+    
+    for j in range(n):
+        v = A[:, j]
+        for i in range(j):
+            R[i, j] = np.dot(np.conjugate(Q[:, i]), v)
+            v = v - R[i, j] * Q[:, i]
+        R[j, j] = np.linalg.norm(v)
+        Q[:, j] = v / R[j, j]
+    
+    return Q, R
