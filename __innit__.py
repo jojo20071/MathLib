@@ -6,6 +6,7 @@ import pywt
 from scipy.signal import hilbert
 import numpy.polynomial.legendre as leg
 from sklearn.svm import SVC
+from scipy.fft import fft, ifft
 
 def add(a,b):
     return a+b
@@ -403,3 +404,107 @@ def complex_svm(X, y, C=1.0, kernel='linear'):
     clf = SVC(C=C, kernel=kernel)
     clf.fit(real_part, y)
     return clf
+
+def complex_pcr(X, y, num_components):
+    X_mean = np.mean(X, axis=0)
+    X_centered = X - X_mean
+    
+    U, S, V = np.linalg.svd(X_centered, full_matrices=False)
+    V = V.T[:, :num_components]
+    
+    Z = np.dot(X_centered, V)
+    coeffs = np.linalg.lstsq(Z, y, rcond=None)[0]
+    
+    return V @ coeffs, X_mean
+
+
+def complex_monte_carlo_integration(f, a, b, num_samples=10000):
+    real_samples = np.random.uniform(a.real, b.real, num_samples)
+    imag_samples = np.random.uniform(a.imag, b.imag, num_samples)
+    
+    samples = real_samples + 1j * imag_samples
+    values = np.array([f(z) for z in samples])
+    
+    area = (b.real - a.real) * (b.imag - a.imag)
+    integral = area * np.mean(values)
+    
+    return integral
+
+
+def complex_matrix_sign(A):
+    U, S, V = np.linalg.svd(A)
+    S_sign = np.sign(S)
+    return np.dot(U, np.dot(np.diag(S_sign), V))
+
+
+def complex_lms_filter(d, x, mu=0.01, num_iterations=1000):
+    N = len(x)
+    w = np.zeros(N, dtype=complex)
+    for n in range(num_iterations):
+        y = np.dot(w.conjugate(), x)
+        e = d - y
+        w = w + mu * e * x.conjugate()
+    return w
+
+
+def complex_hankel(c, r=None):
+    if r is None:
+        r = np.zeros_like(c)
+    elif r[0] != c[-1]:
+        raise ValueError("r[0] should be the same as c[-1]")
+    A = np.zeros((len(c), len(r)), dtype=complex)
+    for i in range(len(c)):
+        for j in range(len(r)):
+            if i + j < len(c):
+                A[i, j] = c[i + j]
+            else:
+                A[i, j] = r[i + j - len(c) + 1]
+    return A
+
+def complex_fft_filter(signal, filter_function):
+    fft_signal = fft(signal)
+    filtered_fft_signal = filter_function(fft_signal)
+    filtered_signal = ifft(filtered_fft_signal)
+    return filtered_signal
+
+def complex_givens_rotation(a, b):
+    if b == 0:
+        c = 1 + 0j
+        s = 0 + 0j
+    else:
+        if abs(b) > abs(a):
+            r = a / b
+            s = 1 / np.sqrt(1 + abs(r)**2)
+            c = s * r
+        else:
+            r = b / a
+            c = 1 / np.sqrt(1 + abs(r)**2)
+            s = c * r
+    
+    return c, s
+
+def apply_givens_rotation(A, c, s, i, j):
+    for k in range(A.shape[1]):
+        temp = c * A[i, k] - s * A[j, k]
+        A[j, k] = s * A[i, k] + c * A[j, k]
+        A[i, k] = temp
+    return A
+
+def complex_ar_model_fit(signal, p):
+    N = len(signal)
+    X = np.array([signal[i:N-p+i] for i in range(p)]).T
+    y = signal[p:]
+    
+    X_pseudo_inv = np.linalg.pinv(X)
+    a = np.dot(X_pseudo_inv, y)
+    
+    return a
+
+def complex_ar_predict(a, signal, steps):
+    p = len(a)
+    predictions = []
+    for _ in range(steps):
+        next_value = np.dot(a, signal[-p:])
+        signal = np.append(signal, next_value)
+        predictions.append(next_value)
+    return np.array(predictions)
