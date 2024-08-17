@@ -3,10 +3,11 @@ import cmath
 import scipy.integrate as integrate
 import scipy.signal as signal
 import pywt
-from scipy.signal import hilbert
 import numpy.polynomial.legendre as leg
 from sklearn.svm import SVC
 from scipy.fft import fft, ifft
+from scipy.stats import norm
+from sklearn.decomposition import SparseCoder
 
 def add(a,b):
     return a+b
@@ -508,3 +509,51 @@ def complex_ar_predict(a, signal, steps):
         signal = np.append(signal, next_value)
         predictions.append(next_value)
     return np.array(predictions)
+
+def complex_wavelet_transform(signal, wavelet='cmor', level=None):
+    coeffs = pywt.wavedec(signal, wavelet=wavelet, level=level)
+    reconstructed_signal = pywt.waverec(coeffs, wavelet=wavelet)
+    return coeffs, reconstructed_signal
+
+def complex_afd(signal, num_terms):
+    N = len(signal)
+    z = np.exp(1j * 2 * np.pi * np.arange(N) / N)
+    coefficients = []
+
+    for _ in range(num_terms):
+        alpha = np.sum(np.conj(z) * signal) / np.sum(np.abs(z)**2)
+        coefficients.append(alpha)
+        signal -= alpha * z
+        z *= np.exp(1j * 2 * np.pi / N)
+    
+    return coefficients
+
+def complex_sparse_coding(signal, dictionary, alpha=1.0):
+    real_signal = np.real(signal)
+    imag_signal = np.imag(signal)
+    
+    coder = SparseCoder(dictionary=dictionary, transform_alpha=alpha)
+    real_code = coder.transform(real_signal)
+    imag_code = coder.transform(imag_signal)
+    
+    return real_code + 1j * imag_code
+
+def complex_cross_correlation(x, y):
+    n = len(x)
+    result = np.zeros(n, dtype=complex)
+    for lag in range(n):
+        result[lag] = np.dot(np.conjugate(x), np.roll(y, lag))
+    return result
+
+def complex_bayesian_inference(prior_mean, prior_var, likelihood_var, data):
+    posterior_mean = prior_mean
+    posterior_var = prior_var
+    
+    for observation in data:
+        likelihood_mean = observation
+        posterior_var = 1 / (1/prior_var + 1/likelihood_var)
+        posterior_mean = posterior_var * (prior_mean/prior_var + likelihood_mean/likelihood_var)
+        prior_mean, prior_var = posterior_mean, posterior_var
+    
+    return posterior_mean, posterior_var
+
