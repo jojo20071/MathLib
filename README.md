@@ -1,4 +1,4 @@
-```markdown
+
 # Complex Mathematical Functions
 
 This repository contains a collection of complex mathematical functions implemented in Python. The functions cover a wide range of mathematical operations, including linear algebra, signal processing, numerical integration, and machine learning.
