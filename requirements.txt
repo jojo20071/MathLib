@@ -1,0 +1,5 @@
+numpy
+scipy
+PyWavelets
+scikit-learn
+emd
