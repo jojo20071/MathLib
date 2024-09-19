@@ -20,16 +20,7 @@ Ensure you have the required libraries installed:
 pip install numpy scipy scikit-learn pywt emd
 ```
 
-## Usage
 
-You can import and use the functions directly in your Python scripts. For example:
-
-```python
-from your_module import complex_fft_filter
-
-# Example usage
-result = complex_fft_filter(signal, filter_function)
-```
 
 ## Author
 
